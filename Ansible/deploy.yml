@@ -4,9 +4,9 @@
   become: yes
   vars:
     # ---------------------------------------------------------
-    # IMPORTANT: This must match your NEW GitHub Repo URL exactly
+    # IMPORTANT: This must match your GitHub Repo URL exactly
     # ---------------------------------------------------------
-    repo_url: "https://github.com/praveenkumarilla4git/InternalFinance-Docker-Ansible-GitHubActions.git"
+    repo_url: "https://github.com/praveenkumarilla4git/InternalFinance-DocAnsi-GitHubActions.git"
     project_dir: "/home/ec2-user/finance-app-cicd"
     image_name: "finance-app-v2"
 
