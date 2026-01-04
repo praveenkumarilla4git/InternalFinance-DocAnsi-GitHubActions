@@ -1,0 +1,42 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # 1. Install Ansible & Git (Bootstrap the new server)
+            sudo dnf update -y
+            sudo dnf install -y ansible-core git
+
+            # 2. Setup Ansible Workspace
+            mkdir -p /home/ec2-user/ansible_cicd
+            cd /home/ec2-user/ansible_cicd
+
+            # 3. Create Local Inventory (Dynamically created by the robot!)
+            echo "[webserver]" > hosts
+            echo "localhost ansible_connection=local" >> hosts
+
+            # 4. DOWNLOAD Playbook from GitHub
+            # I've verified this URL matches your new repo name exactly:
+            curl -o deploy.yml https://raw.githubusercontent.com/praveenkumarilla4git/InternalFinance-DocAnsi-GitHubActions/main/Ansible/deploy.yml
+
+            # 5. RUN Ansible
+            ansible-playbook -i hosts deploy.yml
