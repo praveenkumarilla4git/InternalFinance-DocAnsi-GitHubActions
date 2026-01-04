@@ -1,3 +1,10 @@
+terraform {
+  backend "s3" {
+    bucket = "tf-state-praveen2-2025"
+    key    = "finance-app/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
 provider "aws" {
   region = var.aws_region
   access_key = var.aws_access_key
