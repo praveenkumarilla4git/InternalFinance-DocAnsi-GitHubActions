@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy Finance App Automated
 
 on:
   push:
@@ -7,36 +7,36 @@ on:
 
 jobs:
   deploy:
-    name: Build and Deploy
+    name: Run Ansible Deploy
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout Code
+      # This downloads your repo, including the hosts.ini file you are about to push
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.0
+      # 2. Setup Python (Required for Ansible)
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          script: |
-            # 1. Install Ansible & Git (Bootstrap the new server)
-            sudo dnf update -y
-            sudo dnf install -y ansible-core git
+          python-version: '3.x'
 
-            # 2. Setup Ansible Workspace
-            mkdir -p /home/ec2-user/ansible_cicd
-            cd /home/ec2-user/ansible_cicd
+      # 3. Install Ansible
+      - name: Install Ansible
+        run: pip install ansible
 
-            # 3. Create Local Inventory (Dynamically created by the robot!)
-            echo "[webserver]" > hosts
-            echo "localhost ansible_connection=local" >> hosts
+      # 4. Create SSH Key File from Secrets
+      # We still need the Key to log in, but we don't need the Host IP anymore!
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
 
-            # 4. DOWNLOAD Playbook from GitHub
-            # I've verified this URL matches your new repo name exactly:
-            curl -o deploy.yml https://raw.githubusercontent.com/praveenkumarilla4git/InternalFinance-DocAnsi-GitHubActions/main/Ansible/deploy.yml
-
-            # 5. RUN Ansible
-            ansible-playbook -i hosts deploy.yml
+      # 5. Run Ansible Playbook
+      # We point it to the 'Ansible/hosts.ini' file that Terraform created
+      - name: Run Ansible Playbook
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        run: |
+          ansible-playbook -i Ansible/hosts.ini Ansible/deploy.yml
